@@ -115,15 +115,6 @@ const Login = () => {
                                 </div>
                             </div>
 
-                            {/* Forgot */}
-                            <div className="flex items-center justify-end">
-                                <Link
-                                    className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white underline underline-offset-4"
-                                    to="/forgot-password"
-                                >
-                                    ลืมรหัสผ่าน?
-                                </Link>
-                            </div>
 
                             {/* Submit */}
                             <button
@@ -157,12 +148,11 @@ const Login = () => {
 
                             {/* Register */}
                             <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">
-                                ยังไม่มีบัญชี?{" "}
                                 <Link
-                                    to="/register"
+                                    to="/"
                                     className="font-medium text-neutral-800 dark:text-white underline underline-offset-4"
                                 >
-                                    สมัครสมาชิก
+                                    หน้าหลัก
                                 </Link>
                             </p>
                         </form>

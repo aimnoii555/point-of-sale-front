@@ -63,7 +63,6 @@ const BillToday = () => {
           </TableHeader>
           <TableBody data={selectedBill.bill_sale_details}
             onItem={(item) => {
-              console.log("Hello")
               return (<>
                 <th scope="row" className="px-6 py-4">{item.product.barcode}</th>
                 <td className="px-6 py-4">{item.product.name}</td>

@@ -5,22 +5,33 @@ import Swal from "sweetalert2";
 import config from "../config";
 import ResponseError from "../utils/ResponseError";
 import Modal from "./Modal";
+import TableHeader from "./TableHeader";
+import TableBody from "./TableBody";
+import useBearProvider from "../provider/useBillStore";
+
 
 export const Sidebar = ({ open, onClose, current, setCurrent }) => {
     const [member, setMember] = useState();
     const [packageName, setPackageName] = useState()
     const [billAmount, setBillAmount] = useState(0)
     const [packages, setPackages] = useState([])
-    const [openModal, setOpenModal] = useState(false)
+    const [openModal, setOpenModal] = useState(null)
     const [selectedPackage, setSelectedPackage] = useState(null)
     const [isUpdatingPackage, setIsUpdatingPackage] = useState(false)
-    const [totalBill, setTotalBill] = useState(0)
+    const [banks, setBanks] = useState([])
+
+    const [choosePackage, setChoosePackage] = useState({})
+
+    const [slip, setSlip] = useState()
+
+    const fetchDataTotalBill = useBearProvider((state) => state.fetchDataTotalBill)
+    const totalBill = useBearProvider((state) => state.totalBill)
 
 
 
     useEffect(() => {
         fetchData();
-        fetchDataTotalBill();
+        fetchDataTotalBill()
 
         if (!openModal) {
             setSelectedPackage(null)
@@ -36,16 +47,22 @@ export const Sidebar = ({ open, onClose, current, setCurrent }) => {
     }, [openModal, packages, packageName])
 
 
-    const fetchDataTotalBill = async () => {
+
+
+
+
+    const fetchDataBanks = async () => {
         try {
-            const res = await axios.get(config.path + '/package/count-bill', config.headers())
+            const res = await axios.get(config.path + '/bank/list', config.headers())
             if (res.data.status) {
-                setTotalBill(res.data.total_bill)
+                setBanks(res.data.data)
             }
         } catch (error) {
             ResponseError(error.message)
         }
     }
+
+
 
     const fetchData = async () => {
         try {
@@ -78,42 +95,68 @@ export const Sidebar = ({ open, onClose, current, setCurrent }) => {
 
 
 
-    const handleConfirmPackage = () => {
+    const handleConfirmPackage = (item) => {
         if (!selectedPackage || selectedPackage.name === packageName) {
             return
         }
+        setChoosePackage(item)
+        fetchDataBanks()
+        setOpenModal('payment')
 
-        Swal.fire({
-            title: 'ยืนยันการเปลี่ยนแพ็กเกจ?',
-            text: `ต้องการเปลี่ยนเป็นแพ็กเกจ ${selectedPackage.name} หรือไม่`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'ยืนยัน',
-            cancelButtonText: 'ยกเลิก'
-        }).then(async (result) => {
-            if (!result.isConfirmed) return
 
-            try {
-                setIsUpdatingPackage(true)
-                await axios.put(
-                    config.path + '/member/update-profile',
-                    { package_id: selectedPackage.id },
-                    config.headers()
-                )
-                await fetchData()
+        // Swal.fire({
+        //     title: 'ยืนยันการเปลี่ยนแพ็กเกจ?',
+        //     text: `ต้องการเปลี่ยนเป็นแพ็กเกจ ${selectedPackage.name} หรือไม่`,
+        //     icon: 'question',
+        //     showCancelButton: true,
+        //     confirmButtonText: 'ยืนยัน',
+        //     cancelButtonText: 'ยกเลิก'
+        // }).then(async (result) => {
+        //     if (!result.isConfirmed) return
+
+        //     try {
+        //         setIsUpdatingPackage(true)
+        //         await axios.put(
+        //             config.path + '/member/update-profile',
+        //             { package_id: selectedPackage.id },
+        //             config.headers()
+        //         )
+        //         await fetchData()
+        //         Swal.fire({
+        //             title: 'อัปเดตสำเร็จ',
+        //             text: `เปลี่ยนเป็นแพ็กเกจ ${selectedPackage.name} แล้ว`,
+        //             icon: 'success',
+        //             timer: 2000
+        //         })
+        //         setOpenModal(false)
+        //     } catch (error) {
+        //         ResponseError(error.message)
+        //     } finally {
+        //         setIsUpdatingPackage(false)
+        //     }
+        // })
+    }
+
+    const handleConfirmPayment = async () => {
+        if (!slip) {
+            return;
+        }
+
+        try {
+            const res = await axios.get(config.path + '/package/change-package/' + choosePackage.id, config.headers())
+            if (res.data.status) {
                 Swal.fire({
-                    title: 'อัปเดตสำเร็จ',
-                    text: `เปลี่ยนเป็นแพ็กเกจ ${selectedPackage.name} แล้ว`,
+                    title: 'Success',
+                    text: 'คุณได้แจ้งชำระเงินเรียบร้อยแล้ว ระบบกำลังอัปเดตแพ็กเกจให้',
                     icon: 'success',
-                    timer: 2000
+                    timer: 3000
                 })
+
                 setOpenModal(false)
-            } catch (error) {
-                ResponseError(error.message)
-            } finally {
-                setIsUpdatingPackage(false)
             }
-        })
+        } catch (error) {
+            ResponseError(error.message)
+        }
     }
 
     const formatNumber = (value) => {
@@ -311,7 +354,7 @@ export const Sidebar = ({ open, onClose, current, setCurrent }) => {
                     <h4>{member} : {packageName}</h4>
                 </div>
                 <div>
-                    <button onClick={() => { fetchPackages(); setOpenModal(true) }} className="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-purple-600 to-blue-500 group-hover:from-purple-600 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
+                    <button onClick={() => { fetchPackages(); setOpenModal('package') }} className="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-purple-600 to-blue-500 group-hover:from-purple-600 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800">
                         <span className="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
                             Upgradle Package
                         </span>
@@ -351,7 +394,7 @@ export const Sidebar = ({ open, onClose, current, setCurrent }) => {
                     </div>
                 </footer>
             </aside>
-            <Modal title={'เลือกแพ็กเก็จ'} open={openModal} onClose={() => setOpenModal(false)}>
+            <Modal title={'เลือกแพ็กเก็จ'} open={openModal === 'package'} onClose={() => setOpenModal(false)}>
                 <div className="space-y-6">
                     <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50 px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">แพ็กเกจปัจจุบัน</p>
@@ -432,14 +475,39 @@ export const Sidebar = ({ open, onClose, current, setCurrent }) => {
                             </button>
                             <button
                                 type="button"
-                                onClick={handleConfirmPackage}
+                                onClick={() => handleConfirmPackage(selectedPackage)}
                                 disabled={!selectedPackage || selectedPackage.name === packageName || isUpdatingPackage}
                                 className="rounded-xl bg-violet-600 px-5 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 hover:bg-violet-500"
                             >
-                                {isUpdatingPackage ? 'กำลังอัปเดต...' : 'ยืนยันการเปลี่ยน'}
+                                {isUpdatingPackage ? 'กำลังอัปเดต...' : 'ชำระเงิน'}
                             </button>
                         </div>
                     </div>
+                </div>
+            </Modal>
+            <Modal title={"ชำระเงิน"} open={openModal === 'payment'} onClose={() => setOpenModal(false)}>
+                <span className="text-sm">Pakcage  <span className=" text-green-400">{choosePackage.name}</span> กรุณาโอนเงินจำนวน <span className="text-red-500">{choosePackage.price?.toLocaleString('TH-th')}</span> บาท ไปยังบัญชีด้านล่าง </span>
+                <table className="w-full text-sm text-left text-gray-500 mt-3">
+                    <TableHeader>
+                        <th scope="col" className="py-6 px-3">ธนาคาร</th>
+                        <th scope="col" className="py-6 px-3">เลขบัญชี</th>
+                        <th scope="col" className="py-6 px-3">ชื่อเจ้าของบัญชี</th>
+                        <th scope="col" className="py-6 px-3">ชื่อสาขา</th>
+                    </TableHeader>
+                    <TableBody data={banks} onItem={(item) => (
+                        <>
+                            <td className="py-4 px-3">{item.bank_type}</td>
+                            <td className="py-4 px-3">{item.bank_code}</td>
+                            <td className="py-4 px-3">{item.bank_name}</td>
+                            <td className="py-4 px-3">{item.bank_branch}</td>
+                        </>
+                    )}>
+                    </TableBody>
+                </table>
+                <div className="mt-4 flex flex-col">
+                    <span className="text-red-500 text-sm ml-4 mb-4"> เมื่อโอนเงินแล้วกรุณาแนบสลิปโอนเงินด้วย!! </span>
+                    <input type="file" onChange={(e) => setSlip(e.target.value)} ></input>
+                    <button onClick={() => handleConfirmPayment()} type="button" class="mt-4 text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">ยืนยันการเปลี่ยนแพ็กเกจ</button>
                 </div>
             </Modal>
         </div>

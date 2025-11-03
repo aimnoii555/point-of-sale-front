@@ -4,8 +4,11 @@ import Modal from '../components/Modal';
 import axios from 'axios';
 import ResponseError from '../utils/ResponseError';
 import Swal from 'sweetalert2';
+import useBearProvider from '../provider/useBillStore';
+
 
 const MainSale = () => {
+
 
     const [products, setProducts] = useState([]);
     const [bill, setBill] = useState([]);
@@ -14,6 +17,10 @@ const MainSale = () => {
     const [openModal, setOpenModal] = useState(null)
     const [item, setItem] = useState({})
     const [inputMoney, setInputMoney] = useState(0)
+
+    const fetchDataTotalBill = useBearProvider((state) => state.fetchDataTotalBill)
+
+
 
 
     useEffect(() => {
@@ -124,9 +131,11 @@ const MainSale = () => {
                             timer: 2000
                         })
 
-                        fetchBill()
-                        fetchBillSaleDetail()
+                        await fetchBill()
+                        await fetchBillSaleDetail()
+                        fetchDataTotalBill()
                         setOpenModal(false)
+
                     }
                 } catch (error) {
                     ResponseError(error.mesage)
@@ -160,9 +169,9 @@ const MainSale = () => {
                             products.length > 0 ? products.map((item) => (
                                 <>
                                     <div key={item.id}>
-                                        <div onClick={(e) => handleSave(item)} className='max-w-sm p-3 bg-white border border-gray-200 rounded-lg cursor-pointer shadow-sm dark:bg-neutral-800 dark:border-gray-700'>
+                                        <div onClick={(e) => handleSave(item)} className='max-w-sm h-[100%] p-3 bg-white border border-gray-200 rounded-lg cursor-pointer shadow-sm dark:bg-neutral-800 dark:border-gray-700'>
                                             <img className="rounded-lg h-48 w-96 object-cover mb-5" src={config.path + '/uploads/' + item.product_images[0].image_path} alt="" />
-                                            <h3 className="mb-3 font-normal text-lg text-gray-700 dark:text-gray-400">{item.name}</h3>
+                                            <h3 className="mb-3 font-normal text-lg text-gray-700 dark:text-gray-400 line-clamp-2">{item.name}</h3>
                                             <p className='font-normal text-sm'>{item.price?.toLocaleString('TH-th')}</p>
                                         </div>
 
@@ -209,7 +218,7 @@ const MainSale = () => {
 
                                     {/* รายละเอียดสินค้า */}
                                     <div className="flex flex-col flex-1">
-                                        <div className="text-gray-100 font-medium truncate">{item.product.name}</div>
+                                        <div className="text-gray-100 font-medium truncate w-48">{item.product.name}</div>
                                         <div className="text-gray-400 text-sm mt-0.5">
                                             {item.qty} × {item.price?.toLocaleString('TH-th')}
                                         </div>

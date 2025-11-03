@@ -5,6 +5,7 @@ import Modal from "../components/Modal"; // ✅ default import
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import ResponseError from "../utils/ResponseError";
+import PackageNavbar from "../components/PackageNavbar";
 
 export function Package() {
   const [packages, setPackages] = useState([]);
@@ -69,6 +70,7 @@ export function Package() {
             } else {
               Swal.fire({
                 title: "สมัครไม่สำเร็จ",
+                text: res.data.message,
                 icon: "error",
                 timer: 2000,
               });
@@ -85,6 +87,9 @@ export function Package() {
 
   return (
     <>
+      <PackageNavbar onClick={() => {
+        navigate('/login')
+      }} />
       <div className="max-w-6xl mx-auto px-4 py-6">
         <h2 className="text-2xl font-bold text-neutral-800 dark:text-white">
           Package
