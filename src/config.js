@@ -1,5 +1,5 @@
 const config = {
-    path: 'http://localhost:3000',
+    path: 'https://pos-service.deekrub.com',
     token_name: 'user_token',
     token: ()=> {
         return localStorage.getItem('user_token')
